@@ -12,6 +12,18 @@ import (
 	"time"
 )
 
+const (
+	brightnessMin = 3
+	brightnessMax = 100
+	tempMin       = 2900
+	tempMax       = 7000
+
+	tempConstant   = 9900
+	tempCoefficent = 20.35
+	tempHalfstep   = 25
+	tempStep       = 50
+)
+
 // A Client can control Elgato Key Light devices.
 type Client struct {
 	c *http.Client
@@ -67,10 +79,10 @@ type Light struct {
 	// On reports whether the light is currently on or off.
 	On bool
 
-	// Brightness is the brightness level of the light on a scale of 0-100.
+	// Brightness is the brightness level of the light with a valid range of 3-100.
 	Brightness int
 
-	// Temperature is the light's color temperature in Kelvin.
+	// Temperature is the light's color temperature with a valid range of 2900-7000K.
 	Temperature int
 }
 
@@ -128,6 +140,16 @@ func (c *Client) Lights(ctx context.Context) ([]*Light, error) {
 
 // SetLights configures the state of all lights on a Key Light device.
 func (c *Client) SetLights(ctx context.Context, lights []*Light) error {
+	for _, l := range lights {
+		if l.Temperature < tempMin || l.Temperature > tempMax {
+			return fmt.Errorf("temperature (%d) out of range 2900 <= x <= 7000", l.Temperature)
+		}
+
+		if l.Brightness < brightnessMin || l.Brightness > brightnessMax {
+			return fmt.Errorf("brightness (%d) out of range 3 <= x <= 100", l.Brightness)
+		}
+	}
+
 	// This structure is small enough where marshaling the whole thing in memory
 	// is not a concern.
 	b, err := json.Marshal(lightsBody{Lights: lights})
@@ -188,10 +210,16 @@ func (c *Client) do(ctx context.Context, method, path string, body io.Reader, ou
 
 // convertToKelvin converts the Elgato API temperatures to Kelvin.
 func convertToKelvin(elgato int) int {
-	return int(math.Round(10000*math.Pow(float64(elgato), -1)) * 100)
+	kelvin := tempConstant - int(math.Round(float64(elgato)*tempCoefficent))
+	remainder := kelvin % tempStep
+	if remainder > tempHalfstep {
+		return kelvin + tempStep - remainder
+	}
+	return kelvin - remainder
 }
 
 // convertToAPI converts Kelvin temperatures to those of the Elgato API.
 func convertToAPI(kelvin int) int {
-	return int(math.Round(98700700*math.Pow(float64(kelvin), -0.999)) / 100)
+	elgato := float64(kelvin-tempConstant) / tempCoefficent
+	return int(math.Abs(math.Trunc(elgato)))
 }
