@@ -9,7 +9,7 @@ Command `keylight` provides a command-line interface to control Elgato Key
 Light devices.
 
 ```
-$ go install github.com/mdlayher/keylight/cmd/keylight
+$ go get github.com/mdlayher/keylight/cmd/keylight
 ```
 
 At the moment, the only supported operation is toggling the light state for
