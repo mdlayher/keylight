@@ -96,7 +96,7 @@ func TestClientSetLights(t *testing.T) {
 	light := &keylight.Light{
 		On:          true,
 		Brightness:  15,
-		Temperature: 293,
+		Temperature: 2900,
 	}
 
 	tests := []struct {
@@ -111,7 +111,7 @@ func TestClientSetLights(t *testing.T) {
 				light,
 				// This light doesn't actually exist and should prompt the client
 				// to return an error.
-				{On: true},
+				light,
 			},
 			check: func(t *testing.T, err error) {
 				if !strings.Contains(err.Error(), "attempted to configure 2 lights, but 1 are present") {
@@ -122,6 +122,28 @@ func TestClientSetLights(t *testing.T) {
 		{
 			name:   "OK",
 			lights: []*keylight.Light{light},
+		},
+		{
+			name: "temperature outside of range",
+			lights: []*keylight.Light{
+				{On: true, Temperature: 2899, Brightness: 15},
+			},
+			check: func(t *testing.T, err error) {
+				if !strings.Contains(err.Error(), "temperature (2899) out of range 2900 <= x <= 7000") {
+					t.Fatalf("error did not mention malformed temperature input: %v", err)
+				}
+			},
+		},
+		{
+			name: "brightness outside of range",
+			lights: []*keylight.Light{
+				{On: true, Temperature: 2900, Brightness: 101},
+			},
+			check: func(t *testing.T, err error) {
+				if !strings.Contains(err.Error(), "brightness (101) out of range 3 <= x <= 100") {
+					t.Fatalf("error did not mention malformed brightness input: %v", err)
+				}
+			},
 		},
 	}
 
