@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"time"
 
@@ -48,7 +49,8 @@ func main() {
 
 		onOff := "off"
 		if l.On {
-			onOff = "on"
+			onOff = fmt.Sprintf("on: temperature %dK, brightness %d%%",
+				l.Temperature, l.Brightness)
 		}
 
 		log.Printf("device %q, light %d %s", name, i, onOff)
