@@ -50,11 +50,11 @@ func NewClient(addr string, c *http.Client) (*Client, error) {
 
 // A Device contains metadata about an Elgato Key Light device.
 type Device struct {
-	ProductName         string `json:"productName"`
-	FirmwareBuildNumber int    `json:"firmwareBuildNumber"`
-	FirmwareVersion     string `json:"firmwareVersion"`
-	SerialNumber        string `json:"serialNumber"`
-	DisplayName         string `json:"displayName"`
+	ProductName         string `json:"productName,omitempty"`
+	FirmwareBuildNumber int    `json:"firmwareBuildNumber,omitempty"`
+	FirmwareVersion     string `json:"firmwareVersion,omitempty"`
+	SerialNumber        string `json:"serialNumber,omitempty"`
+	DisplayName         string `json:"displayName,omitempty"`
 
 	// TODO: add hardwareBoardType, features?
 }
@@ -67,6 +67,16 @@ func (c *Client) AccessoryInfo(ctx context.Context) (*Device, error) {
 	}
 
 	return &d, nil
+}
+
+// SetDisplayName updates the display name for a Key Light device.
+func (c *Client) SetDisplayName(ctx context.Context, name string) error {
+	b, err := json.Marshal(Device{DisplayName: name})
+	if err != nil {
+		return err
+	}
+
+	return c.do(ctx, http.MethodPut, "/elgato/accessory-info", bytes.NewReader(b), nil)
 }
 
 var (
