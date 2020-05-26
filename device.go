@@ -51,12 +51,13 @@ func NewClient(addr string, c *http.Client) (*Client, error) {
 // A Device contains metadata about an Elgato Key Light device.
 type Device struct {
 	ProductName         string `json:"productName,omitempty"`
+	HardwareBoardType   int    `json:"hardwareBoardType,omitempty"`
 	FirmwareBuildNumber int    `json:"firmwareBuildNumber,omitempty"`
 	FirmwareVersion     string `json:"firmwareVersion,omitempty"`
 	SerialNumber        string `json:"serialNumber,omitempty"`
 	DisplayName         string `json:"displayName,omitempty"`
 
-	// TODO: add hardwareBoardType, features?
+	// TODO: add features?
 }
 
 // AccessoryInfo fetches information about a Key Light device.
