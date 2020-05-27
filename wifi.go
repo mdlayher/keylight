@@ -24,20 +24,21 @@ type WiFiInfo struct {
 // The Elgato Key Light supports none, WEP, and WPA/WPA2 Personal
 type WiFiSecurity int
 
+// Possible WiFiSecurity values for use in a WiFiInfo.
 const (
 	None WiFiSecurity = 0
 	WEP  WiFiSecurity = 1
 	WPA  WiFiSecurity = 2
 )
 
-// SetWiFiInfo encrypts and updates a Key Light's WiFi configuration.
+// SetWiFiInfo updates a Key Light's WiFi configuration.
 func (c *Client) SetWiFiInfo(ctx context.Context, wifi *WiFiInfo, device *Device) error {
 	b, err := json.Marshal(wifi)
 	if err != nil {
 		return err
 	}
 
-	// zero pad the plaintext to aes.BlockSize
+	// Zero pad the plaintext to aes.BlockSize.
 	blen := len(b)
 	padlen := aes.BlockSize - (blen % aes.BlockSize)
 	pad := bytes.Repeat([]byte{0}, padlen)
@@ -62,10 +63,10 @@ func (c *Client) SetWiFiInfo(ctx context.Context, wifi *WiFiInfo, device *Device
 	return c.do(ctx, http.MethodPut, "/elgato/wifi-info", bytes.NewReader(ciphertext), nil)
 }
 
-// aesKey returns the AES key based on the device's board type and firmware build number.
-//
-// Fetched from the Elgato Control Center application.
+// aesKey returns the AES key based on the device's board type and firmware
+// build number.
 func aesKey(boardType, firmwareBuildNumber int) []byte {
+	// Key generation code fetched from the Elgato Control Center application.
 	return []byte{
 		76, 180, byte(boardType >> 0), byte(boardType >> 8),
 		176, 234, 221, 238,

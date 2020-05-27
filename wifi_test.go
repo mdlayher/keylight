@@ -16,24 +16,28 @@ import (
 	"github.com/mdlayher/keylight"
 )
 
-func TestClientSetWifi(t *testing.T) {
+func TestClientSetWiFiInfo(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
 	defer cancel()
 
-	device := &keylight.Device{
-		ProductName:         "Elgato Key Light",
-		FirmwareBuildNumber: 192,
-		FirmwareVersion:     "1.0.3",
-		SerialNumber:        "ABCDEFGHIJKL",
-		DisplayName:         "Office",
-		HardwareBoardType:   42,
-	}
-	wifi := &keylight.WiFiInfo{
-		SSID:         "Elgato SSID",
-		Passphrase:   "Elgato",
-		SecurityType: keylight.WPA,
-	}
-	var got *keylight.WiFiInfo
+	var (
+		device = &keylight.Device{
+			ProductName:         "Elgato Key Light",
+			FirmwareBuildNumber: 192,
+			FirmwareVersion:     "1.0.3",
+			SerialNumber:        "ABCDEFGHIJKL",
+			DisplayName:         "Office",
+			HardwareBoardType:   42,
+		}
+
+		want = &keylight.WiFiInfo{
+			SSID:         "Elgato SSID",
+			Passphrase:   "Elgato",
+			SecurityType: keylight.WPA,
+		}
+
+		got *keylight.WiFiInfo
+	)
 
 	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
 		if diff := cmp.Diff(http.MethodPut, r.Method); diff != "" {
@@ -54,17 +58,17 @@ func TestClientSetWifi(t *testing.T) {
 		}
 	})
 
-	if err := c.SetWiFiInfo(ctx, wifi, device); err != nil {
-		t.Fatalf("failed to fetch device: %v", err)
+	if err := c.SetWiFiInfo(ctx, want, device); err != nil {
+		t.Fatalf("failed to set WiFi info: %v", err)
 	}
 
-	if diff := cmp.Diff(got, wifi); diff != "" {
-		t.Fatalf("unexpected wifi (-want +got):\n%s", diff)
+	if diff := cmp.Diff(got, want); diff != "" {
+		t.Fatalf("unexpected WiFiInfo(-want +got):\n%s", diff)
 	}
 }
 
 func decrypt(ciphertext []byte, device *keylight.Device) (*keylight.WiFiInfo, error) {
-	key := aesKey(device.HardwareBoardType, device.FirmwareBuildNumber)
+	key := keylight.AESKey(device.HardwareBoardType, device.FirmwareBuildNumber)
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -85,9 +89,9 @@ func decrypt(ciphertext []byte, device *keylight.Device) (*keylight.WiFiInfo, er
 	mode := cipher.NewCBCDecrypter(block, iv)
 	mode.CryptBlocks(ciphertext, ciphertext)
 
-	// unpad the zero padded plaintext by searching for the first
-	// null byte. If we don't find one, then we expect the message
-	// to be an exact multiple of aes.BlockSize
+	// Unpad the zero padded plaintext by searching for the first null byte. If
+	// we don't find one, then we expect the message to be an exact multiple of
+	// aes.BlockSize.
 	idx := bytes.IndexByte(ciphertext, 0)
 	if idx < 0 {
 		idx = len(ciphertext)
@@ -99,14 +103,4 @@ func decrypt(ciphertext []byte, device *keylight.Device) (*keylight.WiFiInfo, er
 	}
 
 	return wifi, nil
-}
-
-// aesKey returns the AES key based on the device's board type and firmware build number.
-func aesKey(boardType, firmwareBuildNumber int) []byte {
-	return []byte{
-		76, 180, byte(boardType >> 0), byte(boardType >> 8),
-		176, 234, 221, 238,
-		235, 42, 3, 138,
-		49, byte(firmwareBuildNumber >> 0), byte(firmwareBuildNumber >> 8), 86,
-	}
 }
