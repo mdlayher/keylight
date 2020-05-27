@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -46,6 +47,38 @@ func TestClientAccessoryInfo(t *testing.T) {
 
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("unexpected device (-want +got):\n%s", diff)
+	}
+}
+
+func TestClientSetDisplayName(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+
+	var got string
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if diff := cmp.Diff(http.MethodPut, r.Method); diff != "" {
+			panicf("unexpected HTTP method (-want +got):\n%s", diff)
+		}
+
+		if diff := cmp.Diff("/elgato/accessory-info", r.URL.Path); diff != "" {
+			panicf("unexpected URL path (-want +got):\n%s", diff)
+		}
+
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			panicf("failed to read body: %v", err)
+		}
+		got = string(b)
+	})
+
+	if err := c.SetDisplayName(ctx, "Office"); err != nil {
+		t.Fatalf("failed to set display name: %v", err)
+	}
+
+	// Verify the raw JSON to ensure that we don't pass any other fields to
+	// the server.
+	if diff := cmp.Diff(`{"displayName":"Office"}`, got); diff != "" {
+		t.Fatalf("unexpected display name (-want +got):\n%s", diff)
 	}
 }
 
