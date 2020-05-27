@@ -82,6 +82,25 @@ func TestClientSetDisplayName(t *testing.T) {
 	}
 }
 
+func TestClientIdentify(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+
+	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+		if diff := cmp.Diff(http.MethodPost, r.Method); diff != "" {
+			panicf("unexpected HTTP method (-want +got):\n%s", diff)
+		}
+
+		if diff := cmp.Diff("/elgato/identify", r.URL.Path); diff != "" {
+			panicf("unexpected URL path (-want +got):\n%s", diff)
+		}
+	})
+
+	if err := c.Identify(ctx); err != nil {
+		t.Fatalf("failed to identify: %v", err)
+	}
+}
+
 func TestClientLights(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
 	defer cancel()

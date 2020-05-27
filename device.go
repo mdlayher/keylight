@@ -80,6 +80,11 @@ func (c *Client) SetDisplayName(ctx context.Context, name string) error {
 	return c.do(ctx, http.MethodPut, "/elgato/accessory-info", bytes.NewReader(b), nil)
 }
 
+// Identify informs the Key Light device to flash its light for easy identification.
+func (c *Client) Identify(ctx context.Context) error {
+	return c.do(ctx, http.MethodPost, "/elgato/identify", nil, nil)
+}
+
 var (
 	_ json.Marshaler   = &Light{}
 	_ json.Unmarshaler = &Light{}
