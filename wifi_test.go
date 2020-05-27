@@ -47,6 +47,11 @@ func TestClientSetWiFiInfo(t *testing.T) {
 		if diff := cmp.Diff("/elgato/wifi-info", r.URL.Path); diff != "" {
 			panicf("unexpected URL path (-want +got):\n%s", diff)
 		}
+
+		if diff := cmp.Diff(r.Header.Get("Content-Type"), keylight.ContentBinary); diff != "" {
+			panicf("unexpected Content-Type (-want +got):\n%s", diff)
+		}
+
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			panic(err)
@@ -97,10 +102,10 @@ func decrypt(ciphertext []byte, device *keylight.Device) (*keylight.WiFiInfo, er
 		idx = len(ciphertext)
 	}
 
-	wifi := &keylight.WiFiInfo{}
-	if err = json.Unmarshal(ciphertext[:idx], wifi); err != nil {
+	var wifi keylight.WiFiInfo
+	if err := json.Unmarshal(ciphertext[:idx], &wifi); err != nil {
 		return nil, err
 	}
 
-	return wifi, nil
+	return &wifi, nil
 }

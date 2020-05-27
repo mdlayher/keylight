@@ -260,7 +260,7 @@ func testClient(t *testing.T, fn http.HandlerFunc) *keylight.Client {
 	t.Helper()
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Content-Type", keylight.ContentJSON)
 
 		if fn != nil {
 			fn(w, r)

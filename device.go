@@ -184,6 +184,12 @@ func (c *Client) SetLights(ctx context.Context, lights []*Light) error {
 	return nil
 }
 
+// Possible Content-Type header values the Client may send.
+const (
+	contentBinary = "application/octet-stream"
+	contentJSON   = "application/json; charset=utf-8"
+)
+
 // do performs an HTTP request with the input parameters, optionally
 // unmarshaling a JSON body into out if out is not nil.
 func (c *Client) do(ctx context.Context, method, path string, body io.Reader, out interface{}) error {
@@ -196,6 +202,16 @@ func (c *Client) do(ctx context.Context, method, path string, body io.Reader, ou
 	if err != nil {
 		return err
 	}
+
+	// Setting WiFi info requires an octet-stream payload while the rest of the
+	// endpoints just accept normal JSON.
+	var content string
+	if method == http.MethodPut && path == pathWiFiInfo {
+		content = contentBinary
+	} else {
+		content = contentJSON
+	}
+	req.Header.Set("Content-Type", content)
 
 	res, err := c.c.Do(req)
 	if err != nil {

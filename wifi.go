@@ -11,6 +11,10 @@ import (
 	"net/http"
 )
 
+// pathWiFiInfo indicates an unusual request is required compared to standard
+// JSON endpoints.
+const pathWiFiInfo = "/elgato/wifi-info"
+
 // A WiFiInfo contains the information neccessary for a Key Light to connect
 // to a wireless network.
 type WiFiInfo struct {
@@ -60,7 +64,7 @@ func (c *Client) SetWiFiInfo(ctx context.Context, wifi *WiFiInfo, device *Device
 	mode := cipher.NewCBCEncrypter(block, iv)
 	mode.CryptBlocks(ciphertext[aes.BlockSize:], plaintext)
 
-	return c.do(ctx, http.MethodPut, "/elgato/wifi-info", bytes.NewReader(ciphertext), nil)
+	return c.do(ctx, http.MethodPut, pathWiFiInfo, bytes.NewReader(ciphertext), nil)
 }
 
 // aesKey returns the AES key based on the device's board type and firmware
