@@ -76,11 +76,12 @@ func main() {
 		}
 	}
 
-	logInfo(d, lights)
-
 	if err := c.SetLights(ctx, lights); err != nil {
 		log.Fatalf("failed to set lights: %v", err)
 	}
+
+	logInfo(d, lights)
+
 }
 
 // logInfo logs information about a device and its lights.
