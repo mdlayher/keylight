@@ -260,10 +260,13 @@ func TestClientErrors(t *testing.T) {
 			fn: func(w http.ResponseWriter, r *http.Request) {
 				// The client's context will be canceled while this sleep is
 				// occurring.
-				time.Sleep(500 * time.Millisecond)
-
-				if err := r.Context().Err(); !errors.Is(err, context.Canceled) {
-					panicf("expected context canceled, but got: %v", err)
+				select {
+				case <-time.After(1 * time.Second):
+					panic("client context took too long to be canceled")
+				case <-r.Context().Done():
+					if err := r.Context().Err(); !errors.Is(err, context.Canceled) {
+						panicf("expected context canceled, but got: %v", err)
+					}
 				}
 			},
 			check: func(t *testing.T, err error) {
@@ -288,7 +291,7 @@ func TestClientErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+			ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 			defer cancel()
 
 			c := testClient(t, tt.fn)
