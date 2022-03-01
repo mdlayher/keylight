@@ -321,10 +321,7 @@ func testClient(t *testing.T, fn http.HandlerFunc) *keylight.Client {
 			fn(w, r)
 		}
 	}))
-
-	t.Cleanup(func() {
-		srv.Close()
-	})
+	t.Cleanup(srv.Close)
 
 	c, err := keylight.NewClient(srv.URL, nil)
 	if err != nil {
@@ -332,7 +329,6 @@ func testClient(t *testing.T, fn http.HandlerFunc) *keylight.Client {
 	}
 
 	return c
-
 }
 
 func panicf(format string, a ...interface{}) {
