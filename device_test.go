@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -55,7 +55,7 @@ func TestClientSetDisplayName(t *testing.T) {
 	defer cancel()
 
 	var got string
-	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+	c := testClient(t, func(_ http.ResponseWriter, r *http.Request) {
 		if diff := cmp.Diff(http.MethodPut, r.Method); diff != "" {
 			panicf("unexpected HTTP method (-want +got):\n%s", diff)
 		}
@@ -64,7 +64,7 @@ func TestClientSetDisplayName(t *testing.T) {
 			panicf("unexpected URL path (-want +got):\n%s", diff)
 		}
 
-		b, err := ioutil.ReadAll(r.Body)
+		b, err := io.ReadAll(r.Body)
 		if err != nil {
 			panicf("failed to read body: %v", err)
 		}
@@ -86,7 +86,7 @@ func TestClientIdentify(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
 	defer cancel()
 
-	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+	c := testClient(t, func(_ http.ResponseWriter, r *http.Request) {
 		if diff := cmp.Diff(http.MethodPost, r.Method); diff != "" {
 			panicf("unexpected HTTP method (-want +got):\n%s", diff)
 		}
@@ -257,7 +257,7 @@ func TestClientErrors(t *testing.T) {
 		},
 		{
 			name: "context canceled",
-			fn: func(w http.ResponseWriter, r *http.Request) {
+			fn: func(_ http.ResponseWriter, r *http.Request) {
 				// The client's context will be canceled while this sleep is
 				// occurring.
 				select {
@@ -277,7 +277,7 @@ func TestClientErrors(t *testing.T) {
 		},
 		{
 			name: "malformed JSON",
-			fn: func(w http.ResponseWriter, r *http.Request) {
+			fn: func(w http.ResponseWriter, _ *http.Request) {
 				_, _ = w.Write([]byte{0xff})
 			},
 			check: func(t *testing.T, err error) {

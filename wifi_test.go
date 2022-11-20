@@ -7,7 +7,7 @@ import (
 	"crypto/cipher"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -39,7 +39,7 @@ func TestClientSetWiFiInfo(t *testing.T) {
 		got *keylight.WiFiInfo
 	)
 
-	c := testClient(t, func(w http.ResponseWriter, r *http.Request) {
+	c := testClient(t, func(_ http.ResponseWriter, r *http.Request) {
 		if diff := cmp.Diff(http.MethodPut, r.Method); diff != "" {
 			panicf("unexpected HTTP method (-want +got):\n%s", diff)
 		}
@@ -52,7 +52,7 @@ func TestClientSetWiFiInfo(t *testing.T) {
 			panicf("unexpected Content-Type (-want +got):\n%s", diff)
 		}
 
-		data, err := ioutil.ReadAll(r.Body)
+		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			panic(err)
 		}
